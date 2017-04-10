@@ -1,7 +1,8 @@
 package com.lsj.weixin.handler.impl;
 
-import com.lsj.cahce.UserSetting;
 import com.lsj.itask.TaskHandler;
+import com.lsj.setting.UserSetting;
+import com.lsj.setting.service.DialogService;
 import com.lsj.weixin.bean.basebean.AddMsg;
 import com.lsj.weixin.handler.MsgHandler;
 import com.lsj.weixin.trans.WeiXinTrans;
@@ -26,20 +27,23 @@ public class FileHelpMsgHandler extends MsgHandler {
      * @param addMsg
      * @return
      */
-    private boolean isSystemMsg(AddMsg addMsg) {
+    private boolean isSystemMsg(AddMsg addMsg)  {
         if (!addMsg.getMsgType().equals("1")) {
             return false;
         }
         if (addMsg.getToUserName().equals(UserSetting.fileHelperUser.getUserName())) {
             //TODO 处理文件传输助手消息
-            if(UserSetting.handleTuringCmd(addMsg.getContent())){//是指令
+            String content=addMsg.getContent();
+            if(UserSetting.handleTuringCmd(content)){//是指令
                 return false;
             }
-            if("设置定时消息".equals(addMsg.getContent())||TaskHandler.getCurrentMsgTask()!=null){
+            if("设置定时消息".equals(content)||TaskHandler.getCurrentMsgTask()!=null){
                 TaskHandler.handle(addMsg.getContent());
                 return false;
             }
-
+            if(content.startsWith("-cp")){
+                DialogService.settingDialog(content);
+            }
 
         }
         return false;

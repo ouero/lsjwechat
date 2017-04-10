@@ -1,6 +1,6 @@
 package com.lsj.weixin.handler.impl;
 
-import com.lsj.cahce.UserSetting;
+import com.lsj.setting.UserSetting;
 import com.lsj.weixin.bean.basebean.AddMsg;
 import com.lsj.weixin.handler.MsgHandler;
 import com.lsj.weixin.trans.WeiXinTrans;

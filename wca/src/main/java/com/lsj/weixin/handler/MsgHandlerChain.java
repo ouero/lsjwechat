@@ -20,23 +20,24 @@ public class MsgHandlerChain {
 
     /**
      * 处理消息
+     *
      * @param addMsgList
      */
-    public void handleReceiveMsg(List<AddMsg> addMsgList){
+    public void handleReceiveMsg(List<AddMsg> addMsgList) {
         for (AddMsg addMsg : addMsgList) {
             for (MsgHandler msgHandler : msgHandlerList) {
-                if(!msgHandler.handleReceiveMsg(addMsg)){
+                if (!msgHandler.handleReceiveMsg(addMsg)) {
                     break;
                 }
             }
         }
-
     }
 
     public void setWeiXinTrans(WeiXinTrans weiXinTrans) {
         this.weiXinTrans = weiXinTrans;
-        msgHandlerList=new ArrayList<>();
+        msgHandlerList = new ArrayList<>();
         msgHandlerList.add(new RoomMsgHandler(this.weiXinTrans));
+        msgHandlerList.add(new GzhMsgHandler(this.weiXinTrans));
         msgHandlerList.add(new FileHelpMsgHandler(this.weiXinTrans));
         msgHandlerList.add(new SelfMsgHandler(this.weiXinTrans));
         msgHandlerList.add(new ImgMsgHandler(this.weiXinTrans));

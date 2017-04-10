@@ -1,7 +1,8 @@
 package com.lsj.weixin.handler.impl;
 
-import com.lsj.cahce.UserSetting;
+import com.lsj.setting.UserSetting;
 import com.lsj.weixin.bean.basebean.User;
+import com.lsj.weixin.data.UserData;
 import com.lsj.weixin.handler.UserInfoHandler;
 
 import java.util.List;
@@ -18,11 +19,14 @@ public class DefaultUserInfoHandler extends UserInfoHandler {
 
     @Override
     public void handleGetUser(List<User> userList) {
-        UserSetting.addUser(userList);
-        UserSetting.SetDefaultUser(userList);
+        UserData.addUser(userList);
+        UserSetting.SetDefaultUser(UserData.userList);
     }
 
-
+    /**
+     * 群成员不处理
+     * @param userList
+     */
     @Override
     public void handleGetBatchUser(List<User> userList) {
 

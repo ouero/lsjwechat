@@ -1,4 +1,4 @@
-package com.lsj.cahce;
+package com.lsj.setting;
 
 /**
  * Created by Chan on 2017/1/15.

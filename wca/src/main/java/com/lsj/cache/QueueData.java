@@ -1,4 +1,4 @@
-package com.lsj.cahce;
+package com.lsj.cache;
 
 
 import com.lsj.weixin.bean.basebean.AddMsg;
@@ -18,7 +18,7 @@ public class QueueData {
     /**
      * 发送给小冰的消息队列
      */
-    public static LinkedBlockingQueue<AddMsg> sendToXiaoBingQueue=new LinkedBlockingQueue();
+//    public static LinkedBlockingQueue<AddMsg> sendToXiaoBingQueue=new LinkedBlockingQueue();
     /**
      * 接受小冰的信息
      */

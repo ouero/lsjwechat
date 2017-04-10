@@ -2,7 +2,7 @@ package com.lsj.weixin.trans;
 
 
 import com.alibaba.fastjson.JSON;
-import com.lsj.cahce.SystemSetting;
+import com.lsj.setting.SystemSetting;
 import com.lsj.weixin.bean.basebean.*;
 import com.lsj.weixin.bean.transbean.*;
 import com.lsj.weixin.handler.MsgHandlerChain;
@@ -19,6 +19,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
@@ -31,12 +32,14 @@ import java.util.*;
  */
 public class WeiXinTrans {
 
+    private Logger logger = Logger.getLogger(WeiXinTrans.class);
+
     private UserInfoHandler userInfoHandler;
     private MsgHandlerChain msgHandlerChain;
     private User selfInfo;
     private Thread syncCheckThread;
-    private List<User> userList=new ArrayList<>();
-    private int retryTime= SystemSetting.RETRY_TIME;
+    private List<User> userList = new ArrayList<>();
+    private int retryTime = SystemSetting.RETRY_TIME;
 
 
     private Map<String, String> cookieMap = new HashMap<>(64);
@@ -50,7 +53,7 @@ public class WeiXinTrans {
     private String webwx_data_ticket = null;
     private int fielNo = 0;
     private String subHost = "wx";
-    private long lastActiveTime=System.currentTimeMillis();
+    private long lastActiveTime = System.currentTimeMillis();
 
     public String getLoginUUID() {
         String responseStr = httpGet("https://login.wx.qq.com/jslogin?appid=wx782c26e4c19acffb&redirect_uri=https%3A%2F%2Fwx.qq.com%2Fcgi-bin%2Fmmwebwx-bin%2Fwebwxnewloginpage&fun=new&lang=zh_CN&_" + System.currentTimeMillis());
@@ -88,7 +91,6 @@ public class WeiXinTrans {
         if (cookieStr != null) {
             httpget.setHeader("Cookie", cookieStr);
         }
-        System.out.println(Thread.currentThread().getId()+"发出get请求==> " + httpget.getURI());
         CloseableHttpResponse response = null;
         String responseHtml = null;
         try {
@@ -97,17 +99,17 @@ public class WeiXinTrans {
             responseHtml = EntityUtils.toString(response.getEntity(), Charset.forName("UTF-8"));
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("get 请求发起异常" + e.getClass());
+            logger.error("get 请求发起异常" + e.getClass());
         } finally {
             if (response != null) {
                 try {
                     response.close();
                     httpClient.close();
                 } catch (IOException e) {
-                    System.out.println("关闭请求异常" + e.getClass());
+                    logger.error("关闭请求异常" + e.getClass());
                 }
             }
-            // System.out.println("get请求回复==>" + responseHtml);
+            // logger.error("get请求回复==>" + responseHtml);
             return responseHtml;
         }
     }
@@ -120,8 +122,8 @@ public class WeiXinTrans {
         httppost.setEntity(stringEntity);
         httppost.setHeader("Cookie", getCookieStr());
         httppost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36");
-        System.out.println("发出post请求==> " + httppost.getURI());
-        //   System.out.println("body json为==>" + json);
+        logger.error("发出post请求==> " + httppost.getURI());
+        //   logger.error("body json为==>" + json);
         CloseableHttpResponse response = null;
         String responseHtml = null;
         try {
@@ -129,17 +131,16 @@ public class WeiXinTrans {
             setCookie(response);
             responseHtml = EntityUtils.toString(response.getEntity(), Charset.forName("UTF-8"));
         } catch (IOException e) {
-            System.out.println("post 请求异常" + e.getClass());
+            logger.error("post 请求异常" + e.getClass());
         } finally {
             if (response != null) {
                 try {
                     response.close();
                     httpClient.close();
                 } catch (IOException e) {
-                    System.out.println("post 关闭异常" + e.getClass());
+                    logger.error("post 关闭异常" + e.getClass());
                 }
             }
-            // System.out.println("post 请求回复==> " + responseHtml);
             return responseHtml;
         }
     }
@@ -200,8 +201,8 @@ public class WeiXinTrans {
 
 
     private boolean getContactBatchList() {
-        GetBatchContactRequestBody getBatchContactRequestBody= getAllBatchContactRequestBody();
-        if(getBatchContactRequestBody==null){
+        GetBatchContactRequestBody getBatchContactRequestBody = getAllBatchContactRequestBody();
+        if (getBatchContactRequestBody == null) {
             return true;
         }
         String json = JSON.toJSONString(getBatchContactRequestBody);
@@ -216,10 +217,10 @@ public class WeiXinTrans {
     }
 
     private void setCookie(HttpResponse httpResponse) {
-        //   System.out.println("----setCookieStore");
+        //   logger.error("----setCookieStore");
         Header headers[] = httpResponse.getHeaders("Set-Cookie");
         if (headers == null || headers.length == 0) {
-            //        System.out.println("----there are no cookies");
+            //        logger.error("----there are no cookies");
             return;
         }
         String cookie = "";
@@ -231,7 +232,7 @@ public class WeiXinTrans {
         }
         String cookies[] = cookie.split(";");
         for (String c : cookies) {
-            // System.out.println("接收到 cookie"+c);
+            // logger.error("接收到 cookie"+c);
             c = c.trim();
             if (cookieMap.containsKey(c.split("=")[0])) {
                 cookieMap.remove(c.split("=")[0]);
@@ -252,7 +253,7 @@ public class WeiXinTrans {
                 "&deviceid=" + WeChatUtil.getDeviceId() +
                 "&_=" + System.currentTimeMillis();
         String response = httpGet(url);
-        if (response != null&&response.indexOf("retcode:\"1101\"")==-1) {//1101退出的标志
+        if (response != null && response.indexOf("retcode:\"1101\"") == -1) {//1101退出的标志
             feedDog();
             String s = response.substring(response.indexOf("=") + 1);
             return JSON.parseObject(s, SyncCheckResponse.class);
@@ -361,7 +362,7 @@ public class WeiXinTrans {
             conn.setRequestProperty("Referer", "https://wx.qq.com/?&lang=zh_CN");
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36");
 
-            File file = new File(SystemSetting.IMG_PATH+addMsg.getMsgId());
+            File file = new File(SystemSetting.IMG_PATH + addMsg.getMsgId());
             FileUpLoadRequestBody fileUpLoadRequestBody = new FileUpLoadRequestBody();
             fileUpLoadRequestBody.setUploadType("2");
             fileUpLoadRequestBody.setBaseRequest(getBaseRequest());
@@ -387,12 +388,12 @@ public class WeiXinTrans {
                     .append(boundary).append(newLine)
                     .append("Content-Disposition: form-data; name=\"type\"").append(newLine)
                     .append(newLine);
-            if(addMsg.getMsgType().equals("3")){
-                stringBuilder .append("image/jpeg");
-            }else if(addMsg.getMsgType().equals("47")){
-                stringBuilder .append("image/gif");
+            if (addMsg.getMsgType().equals("3")) {
+                stringBuilder.append("image/jpeg");
+            } else if (addMsg.getMsgType().equals("47")) {
+                stringBuilder.append("image/gif");
             }
-                     stringBuilder.append(newLine)
+            stringBuilder.append(newLine)
                     .append(boundary).append(newLine)
                     .append("Content-Disposition: form-data; name=\"lastModifiedDate\"").append(newLine)
                     .append(newLine)
@@ -404,13 +405,13 @@ public class WeiXinTrans {
                     .append(boundary).append(newLine)
                     .append("Content-Disposition: form-data; name=\"mediatype\"").append(newLine)
                     .append(newLine);
-            if(addMsg.getMsgType().equals("3")){
-                stringBuilder .append("pic");
-            }else if(addMsg.getMsgType().equals("47")){
-                stringBuilder .append("doc");
+            if (addMsg.getMsgType().equals("3")) {
+                stringBuilder.append("pic");
+            } else if (addMsg.getMsgType().equals("47")) {
+                stringBuilder.append("doc");
             }
 
-                    stringBuilder.append(newLine)
+            stringBuilder.append(newLine)
                     .append(boundary).append(newLine)
                     .append("Content-Disposition: form-data; name=\"uploadmediarequest\"").append(newLine)
                     .append(newLine)
@@ -425,10 +426,10 @@ public class WeiXinTrans {
                     .append(pass_ticket).append(newLine)
                     .append(boundary).append(newLine)
                     .append("Content-Disposition: form-data; name=\"filename\"; filename=\"" + file.getName() + "\"").append(newLine);
-            if(addMsg.getMsgType().equals("3")){
-                stringBuilder  .append("Content-Type: image/jpeg");
-            }else if(addMsg.getMsgType().equals("47")){
-                stringBuilder  .append("Content-Type: image/gif");
+            if (addMsg.getMsgType().equals("3")) {
+                stringBuilder.append("Content-Type: image/jpeg");
+            } else if (addMsg.getMsgType().equals("47")) {
+                stringBuilder.append("Content-Type: image/gif");
             }
 
             stringBuilder.append(newLine)
@@ -460,22 +461,23 @@ public class WeiXinTrans {
             }
             response = buffer.toString();
             file.delete();//上传后删除图片
-            System.out.println("上传图片返回:" + response);
+            logger.error("上传图片返回:" + response);
             return JSON.parseObject(response, FileUpLoadResponse.class);
         } catch (IOException e) {
-            System.out.println("上传图片获取mediaId异常" + e.getClass());
+            logger.error("上传图片获取mediaId异常" + e.getClass());
         }
         return null;
     }
 
     /**
      * 发送表情
+     *
      * @param toUserName
      * @param fromUserName
      * @param mediaId
      * @return
      */
-    private synchronized SendMsgOrImgResponse sendEmoticon(String fromUserName,String toUserName,String mediaId){
+    private synchronized SendMsgOrImgResponse sendEmoticon(String fromUserName, String toUserName, String mediaId) {
         SendImgMsgRequestBody sendImgMsgRequestBody = new SendImgMsgRequestBody();
         sendImgMsgRequestBody.setBaseRequest(getBaseRequest());
         sendImgMsgRequestBody.setScene("0");
@@ -498,32 +500,31 @@ public class WeiXinTrans {
     }
 
 
-    private synchronized void sendImgOrEmotion(AddMsg addMsg){
-        FileUpLoadResponse fileUpLoadResponse= fileUpload(addMsg);
-        if(fileUpLoadResponse!=null){
-            if(addMsg.getMsgType().equals("3")) {
+    private synchronized void sendImgOrEmotion(AddMsg addMsg) {
+        FileUpLoadResponse fileUpLoadResponse = fileUpload(addMsg);
+        if (fileUpLoadResponse != null) {
+            if (addMsg.getMsgType().equals("3")) {
                 sendImg(selfInfo.getUserName(), addMsg.getToUserName(), fileUpLoadResponse.getMediaId());
-            }else if(addMsg.getMsgType().equals("47")){
+            } else if (addMsg.getMsgType().equals("47")) {
                 sendEmoticon(selfInfo.getUserName(), addMsg.getToUserName(), fileUpLoadResponse.getMediaId());
             }
         }
     }
 
-    public void sendAddMsg(AddMsg addMsg){
-        if(addMsg.getMsgType().equals("1")){
-            sendMsgLoop(addMsg.getToUserName(),addMsg.getContent());
-        }else if(addMsg.getMsgType().equals("3")||addMsg.getMsgType().equals("47")){
+    public void sendAddMsg(AddMsg addMsg) {
+        if (addMsg.getMsgType().equals("1")) {
+            sendMsgLoop(addMsg.getToUserName(), addMsg.getContent());
+        } else if (addMsg.getMsgType().equals("3") || addMsg.getMsgType().equals("47")) {
             sendImgOrEmotion(addMsg);
         }
     }
 
 
-
-    public void getImg(AddMsg addMsg){
-        String url="https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg?" +
-                "&MsgID="+addMsg.getMsgId()+"&skey="+Skey;
-        if(addMsg.getMsgType().equals("47")){//动画表情
-            url=url+"&type=big";
+    public void getImg(AddMsg addMsg) {
+        String url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg?" +
+                "&MsgID=" + addMsg.getMsgId() + "&skey=" + Skey;
+        if (addMsg.getMsgType().equals("47")) {//动画表情
+            url = url + "&type=big";
         }
         System.setProperty("jsse.enableSNIExtension", "false");
         // System.setProperty("https.protocols", "TLSv1.1");
@@ -539,13 +540,13 @@ public class WeiXinTrans {
         try {
             response = httpClient.execute(httpget);
             setCookie(response);
-          InputStream  inputStream = response.getEntity().getContent();
-            File imgDir=new File(SystemSetting.IMG_PATH);
-            if(!imgDir.exists()){
+            InputStream inputStream = response.getEntity().getContent();
+            File imgDir = new File(SystemSetting.IMG_PATH);
+            if (!imgDir.exists()) {
                 imgDir.mkdirs();
             }
-            OutputStream outputStream=new FileOutputStream(new File(SystemSetting.IMG_PATH+addMsg.getMsgId()));
-            IOUtils.copy(inputStream,outputStream);
+            OutputStream outputStream = new FileOutputStream(new File(SystemSetting.IMG_PATH + addMsg.getMsgId()));
+            IOUtils.copy(inputStream, outputStream);
             outputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -557,7 +558,7 @@ public class WeiXinTrans {
                 } catch (IOException e) {
                 }
             }
-            return ;
+            return;
         }
     }
 
@@ -565,7 +566,7 @@ public class WeiXinTrans {
         String cookiesTmp = "";
         for (String key : cookieMap.keySet()) {
             cookiesTmp += key + "=" + cookieMap.get(key) + ";";
-            //   System.out.println("得到Cookie==>  【" + key + "】=【" + cookieMap.get(key) + "】");
+            //   logger.error("得到Cookie==>  【" + key + "】=【" + cookieMap.get(key) + "】");
         }
         if (cookiesTmp.length() < 3) {
             return null;
@@ -613,11 +614,11 @@ public class WeiXinTrans {
     public GetBatchContactRequestBody getAllBatchContactRequestBody() {
         List<User> list = new ArrayList<>();
         for (User user : userList) {
-            if(user.getUserName().startsWith("@@")){
+            if (user.getUserName().startsWith("@@")) {
                 list.add(user);
             }
         }
-        if(list.size()==0){
+        if (list.size() == 0) {
             return null;
         }
         return getBatchContactRequestBody(list);
@@ -647,26 +648,26 @@ public class WeiXinTrans {
     }
 
     public void getCommonInfo() {
-        for (int i=0;i<retryTime;i++){
-          if(newLoginPage()){
-              break;
-          }
-        }
-
-        for (int i=0;i<retryTime;i++){
-            if(initPage()){
+        for (int i = 0; i < retryTime; i++) {
+            if (newLoginPage()) {
                 break;
             }
         }
 
-        for (int i=0;i<retryTime;i++){
-            if(getContactList()){
+        for (int i = 0; i < retryTime; i++) {
+            if (initPage()) {
                 break;
             }
         }
 
-        for (int i=0;i<retryTime;i++){
-            if(getContactBatchList()){
+        for (int i = 0; i < retryTime; i++) {
+            if (getContactList()) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < retryTime; i++) {
+            if (getContactBatchList()) {
                 break;
             }
         }
@@ -675,24 +676,25 @@ public class WeiXinTrans {
     /**
      * 更新最后激活时间
      */
-    private void feedDog(){
-        lastActiveTime=System.currentTimeMillis();
+    private void feedDog() {
+        lastActiveTime = System.currentTimeMillis();
     }
 
     public User getSelfInfo() {
         return selfInfo;
     }
 
-    public List<User> getUserList(){
+    public List<User> getUserList() {
         return this.userList;
     }
+
     public void setSelfInfo(User selfInfo) {
         this.selfInfo = selfInfo;
     }
 
     public void setUserInfoAndMsgHandler(UserInfoHandler userInfoHandler, MsgHandlerChain msgHandlerChain) {
         this.userInfoHandler = userInfoHandler;
-        this.msgHandlerChain=msgHandlerChain;
+        this.msgHandlerChain = msgHandlerChain;
         userInfoHandler.setWeiXinTrans(this);
         msgHandlerChain.setWeiXinTrans(this);
     }

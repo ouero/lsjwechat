@@ -1,6 +1,6 @@
 package com.lsj.weixin.thread;
 
-import com.lsj.cahce.QueueData;
+import com.lsj.cache.QueueData;
 import com.lsj.weixin.bean.basebean.AddMsg;
 import com.lsj.weixin.trans.WeiXinTrans;
 

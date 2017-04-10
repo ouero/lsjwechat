@@ -1,3 +1,5 @@
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,5 +29,11 @@ String string="[\\s\\S]*";
         // 字符串是否与正则表达式相匹]4
         System.out.println(matcher.matches());
 //        Runtime.getRuntime().exec("cmd.exe /c start " + "http://www.google.com");
+    }
+
+    @Test
+    public void test01(){
+        double b=(1 + Math.random()) * 1000;
+        System.out.println(b);
     }
 }

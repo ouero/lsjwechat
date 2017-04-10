@@ -1,6 +1,6 @@
 package com.lsj.main;
 
-import com.lsj.cahce.SystemSetting;
+import com.lsj.setting.SystemSetting;
 import com.lsj.ui.ImageUtil;
 import com.lsj.ui.ViewFrame2;
 import com.lsj.weixin.handler.MsgHandlerChain;
@@ -16,7 +16,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-
 /**
  * Created by Chan on 2017/1/15.
  */

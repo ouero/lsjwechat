@@ -1,8 +1,10 @@
 package com.lsj.weixin.handler.impl;
 
-import com.lsj.cahce.QueueData;
-import com.lsj.cahce.UserSetting;
+import com.lsj.cache.QueueData;
+import com.lsj.setting.UserSetting;
+import com.lsj.setting.service.DialogService;
 import com.lsj.weixin.bean.basebean.AddMsg;
+import com.lsj.weixin.bean.basebean.User;
 import com.lsj.weixin.handler.MsgHandler;
 import com.lsj.weixin.trans.WeiXinTrans;
 
@@ -26,33 +28,41 @@ public class TuringMsgHandler extends MsgHandler {
 //            } catch (InterruptedException e) {
 //                e.printStackTrace();
 //            }
-        if (addMsg.getFromUserName().equals(getTuringUserName())) {
-            AddMsg readToTuring = QueueData.sendToXiaoBingQueue.poll();
-            if (readToTuring != null) {
-                try {
-                    if (addMsg.getMsgType().equals("34")) {//声音
-                        addMsg.setMsgType("1");
-                        addMsg.setContent("然后呢");
-                    }
-                    addMsg.setToUserName(readToTuring.getFromUserName());
-                    Thread.sleep((int) ((1 + Math.random()) * 1000));
-                    QueueData.sendMsgQueue.put(addMsg);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            addMsg.setToUserName(getTuringUserName());
-            try {
-                QueueData.sendMsgQueue.put(addMsg);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            QueueData.sendToXiaoBingQueue.offer(addMsg);
+        User toUser = DialogService.getDialogUser(addMsg.getFromUserName());
+        if (toUser == null) {
+            return false;
+        }
+        if (addMsg.getMsgType().equals("34")) {//声音
+            addMsg.setMsgType("1");
+            addMsg.setContent("然后呢");
+        }
+        addMsg.setToUserName(toUser.getUserName());
+        try {
+            delay(addMsg,toUser);
+            QueueData.sendMsgQueue.put(addMsg);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         return false;
     }
 
+    /**
+     * 当是机器人发送给用户时，延时
+     * @param addMsg
+     * @param toUser
+     * @throws InterruptedException
+     */
+    private void delay(AddMsg addMsg,User toUser) throws InterruptedException {
+        if(addMsg.getFromUserName().equals(getTuringUserName())&&!toUser.getUserName().equals(getTuringUserName())) {
+            int delay;
+            if(addMsg.getMsgType().equals("1")){
+                delay=500+addMsg.getContent().length()*200;
+            }else {
+                delay=(int)((1 + Math.random()) * 1000);
+            }
+            Thread.sleep( delay);
+        }
+    }
     private String getTuringUserName() {
         return UserSetting.Turing.getUserName();
     }

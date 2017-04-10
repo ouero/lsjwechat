@@ -1,6 +1,6 @@
 package com.lsj.ui;
 
-import com.lsj.cahce.SystemSetting;
+import com.lsj.setting.SystemSetting;
 import com.lsj.weixin.bean.basebean.User;
 import com.lsj.weixin.utils.WeChatUtil;
 

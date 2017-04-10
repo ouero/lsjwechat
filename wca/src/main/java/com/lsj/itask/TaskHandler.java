@@ -1,12 +1,13 @@
 package com.lsj.itask;
 
-import com.lsj.cahce.QueueData;
-import com.lsj.cahce.SystemSetting;
-import com.lsj.cahce.UserSetting;
+import com.lsj.cache.QueueData;
 import com.lsj.common.util;
+import com.lsj.setting.SystemSetting;
+import com.lsj.setting.UserSetting;
 import com.lsj.ui.ImageUtil;
 import com.lsj.weixin.bean.basebean.AddMsg;
 import com.lsj.weixin.bean.basebean.User;
+import com.lsj.weixin.data.UserData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,16 +60,16 @@ public class TaskHandler {
         }
 
         if (currentStepId == 1) {//发送好友编码图片
-            sendImgList(UserSetting.userList);
+            sendImgList(UserData.userList);
         } else if (currentStepId == 2) {//发送已选中的好友图片
             String indexs = currentMsgTask.getStepList().get(1).getValue();
             List<User> toAddlist = currentMsgTask.getToAddList();
             if (indexs.equals("00")) {//全部添加
-                toAddlist.addAll(UserSetting.userList);
+                toAddlist.addAll(UserData.userList);
             } else {
                 for (String index : indexs.split(SystemSetting.SPLIT_BY)) {
-                    if (Integer.valueOf(index) <= UserSetting.userList.size()) {
-                        toAddlist.add(UserSetting.userList.get(Integer.valueOf(index) - 1));
+                    if (Integer.valueOf(index) <= UserData.userList.size()) {
+                        toAddlist.add(UserData.userList.get(Integer.valueOf(index) - 1));
                     }
                 }
             }

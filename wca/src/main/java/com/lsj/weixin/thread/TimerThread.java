@@ -1,8 +1,8 @@
 package com.lsj.weixin.thread;
 
-import com.lsj.cahce.QueueData;
-import com.lsj.cahce.UserSetting;
+import com.lsj.cache.QueueData;
 import com.lsj.itask.MsgTask;
+import com.lsj.setting.UserSetting;
 import com.lsj.weixin.bean.basebean.AddMsg;
 import com.lsj.weixin.bean.basebean.User;
 
